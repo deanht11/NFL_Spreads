@@ -124,6 +124,13 @@ def add_favored_team(df):
     return df
 
 
+def add_spread_rank(df):
+    """Add a Rank column based on absolute spread (largest spread = highest rank)."""
+    # Take absolute value since it doesn't matter which side is favored
+    df["Rank"] = df["Point Spread"].abs().rank(ascending=True, method="min")
+    return df
+
+
 def main():
     api_key = load_api_key(API_KEY_FILE)
     week_start, week_end, week_num = get_current_week_bounds()
@@ -140,6 +147,9 @@ def main():
     df = pd.DataFrame(games)
     df.sort_values("Kickoff (Local)", inplace=True)
     df = add_favored_team(df)
+    df = add_spread_rank(df)
+    df.sort_values("Rank", ascending=False, inplace=True)
+
     df.to_excel(OUTPUT_FILE, index=False)
     print(f"✅ Saved {len(df)} Week {week_num} games to {OUTPUT_FILE}")
 
