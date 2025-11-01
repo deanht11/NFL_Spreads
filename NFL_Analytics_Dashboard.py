@@ -322,6 +322,8 @@ def render_content(tab, metric_col, selected_teams, selected_week, selected_matc
         home_edge = (team_off_e.get(home, 0) - team_def_e.get(away, 0)) - (league_avg_off - league_avg_def)
 
         # === Expected EPA Advantage ===
+
+        # === Expected EPA Advantage (with Home Field Adjustment) ===
         league_avg_off = df["rolling_epa_per_play_3wk"].mean()
         league_avg_def = df["rolling_def_epa_per_play_3wk"].mean()
 
@@ -330,6 +332,10 @@ def render_content(tab, metric_col, selected_teams, selected_week, selected_matc
 
         away_edge = (team_off_e.get(away, 0) - team_def_e.get(home, 0)) - (league_avg_off - league_avg_def)
         home_edge = (team_off_e.get(home, 0) - team_def_e.get(away, 0)) - (league_avg_off - league_avg_def)
+
+        # Apply home-field advantage (~0.03 EPA)
+        home_field_bonus = 0.03
+        home_edge += home_field_bonus
 
         # Determine projected winner
         if away_edge > home_edge:
@@ -351,14 +357,14 @@ def render_content(tab, metric_col, selected_teams, selected_week, selected_matc
             confidence = "Low confidence"
 
         edge_text = html.Div([
-            html.H4("⚖️ Predicted Efficiency Edge (EPA Differential)", style={"textAlign": "center"}),
+            html.H4("⚖️ Predicted Efficiency Edge (EPA Differential, Adj. for Home Field)", style={"textAlign": "center"}),
             html.Table([
                 html.Tr([
                     html.Td(f"{away} Expected Edge:", style={"fontWeight": "bold", "textAlign": "right", "paddingRight": "10px"}),
                     html.Td(f"{away_edge:+.3f} EPA", style={"color": "#2ECC71" if away_edge > 0 else "#E74C3C", "fontWeight": "bold"})
                 ]),
                 html.Tr([
-                    html.Td(f"{home} Expected Edge:", style={"fontWeight": "bold", "textAlign": "right", "paddingRight": "10px"}),
+                    html.Td(f"{home} Expected Edge (incl. +0.03 HFA):", style={"fontWeight": "bold", "textAlign": "right", "paddingRight": "10px"}),
                     html.Td(f"{home_edge:+.3f} EPA", style={"color": "#2ECC71" if home_edge > 0 else "#E74C3C", "fontWeight": "bold"})
                 ])
             ], style={
@@ -385,10 +391,6 @@ def render_content(tab, metric_col, selected_teams, selected_week, selected_matc
             html.Br(),
             edge_text
         ])
-
-
-
-
 
         return dcc.Graph(figure=fig)
 
